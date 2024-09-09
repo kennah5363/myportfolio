@@ -1,13 +1,7 @@
 var person = window.prompt("Enter Your Name");
 const name = document.getElementById("name");
-// if (person != null) {
-//   name.innerHTML = "Hello " + person + " It's Me"
-// }
-
-if (person != null) {
-  name.innerHTML = "Hello " + person + ", It's Me";
-} else {
-  window.alert("Please Refresh And Enter Your Name!");
+ if (person != null) {
+   name.innerHTML = "Hello " + person + " It's Me"
 }
 
 
