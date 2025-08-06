@@ -575,6 +575,10 @@ section {
     .section-title {
         font-size: 2rem;
     }
+
+    .projects {
+        padding-top: 2rem;
+    }
     
     .hero-buttons {
         justify-content: center;
@@ -601,6 +605,10 @@ section {
     
     .hero-title {
         font-size: 2rem;
+    }
+
+    .projects {
+        padding-top: 2.5rem;
     }
     
     .contact-form {
