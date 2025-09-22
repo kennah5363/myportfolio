@@ -15,11 +15,12 @@ let pacmanUpImg;
 let pacmanDownImg;
 let pacmanRightImg;
 let pacmanLeftImg;
+let frightenedGhostImage;
 let wallImg;
 let currentLevel = 0;
 const tileMap1 = [
     "XXXXXXXXXXXXXXXXXXX",
-    "X        X        X",
+    "X        X       *X",
     "X XX XXX X XXX XX X",
     "X                 X",
     "X XX X XXXXX X XX X",
@@ -54,7 +55,7 @@ const tileMap2 = [
     "X XXXXXX X XX X X X",
     "X X  X   X X  X   X",
     "X X  X XXXXX XXXX X",
-    "X    X       X  X X",
+    "X    X    *  X  X X",
     "X X XXXXXXXXXX XX X",
     "X X  X  PX     X  X",
     "X X XX   X XXX X XX",
@@ -72,7 +73,7 @@ const tileMap3 = [
     "X       X X X     X",
     "XXXXXX  X X XXXXX X",
     "X       X X       X",
-    "X       X X       X",
+    "X       X*X       X",
     "X XXXXXXXXX XXXXXXX",
     "X                 X",
     "X        P        X",
@@ -93,6 +94,11 @@ const walls = new Set();
 const foods = new Set();
 const ghosts = new Set();
 let pacman;
+let isFrightened = false;
+let frightenedTimer = 0;
+const frightenedDuration = 50;
+
+
 
 
 const directions = ['U', 'D', 'R', 'L'];
@@ -146,6 +152,9 @@ function loadImages() {
     pacmanRightImg.src = "Images/pacmanRight.png";
     wallImg = new Image();
     wallImg.src = "Images/wall.png";
+
+    frightenedGhostImage = new Image();
+    frightenedGhostImage.src = "Images/scaredGhost.png";
 }
 
 
@@ -153,7 +162,7 @@ function loadMap() {
     walls.clear();
     foods.clear();
     ghosts.clear();
-let currentMap = tileMap[currentLevel];
+    let currentMap = tileMap[currentLevel];
 
 
 
@@ -192,6 +201,11 @@ let currentMap = tileMap[currentLevel];
                 const food = new Block(null, x + 14, y + 14, 4, 4);
                 foods.add(food);
             }
+            else if (tileMapChar == '*') {
+                const food = new Block(null, x + 14, y + 14, 8, 8);
+                food.isPower = true;
+                foods.add(food);
+            }
         }
     }
 }
@@ -206,6 +220,15 @@ function nextLevel() {
 
 
 function update() {
+    if (isFrightened) {
+        frightenedTimer--;
+        if (frightenedTimer <= 0) {
+            isFrightened = false;
+            for (let ghost of ghosts) {
+                ghost.setFrightenedMode(false);
+            }
+        }
+    }
     if (gameOver) {
         return;
     }
@@ -282,12 +305,17 @@ function move() {
         }
 
         if (collision(ghost, pacman)) {
-            lives -= 1;
-            if (lives == 0) {
-                gameOver = true;
+            if (isFrightened) {
+                ghosts.delete(ghost);
+                score += 200;
+            } else {
+                lives -= 1;
+                if (lives == 0) {
+                    gameOver = true;
+                }
+                resetPosition();
                 return;
             }
-            resetPosition();
         }
         ghost.x += ghost.velocityX;
         ghost.y += ghost.velocityY;
@@ -310,7 +338,17 @@ function move() {
     for (let food of foods.values()) {
         if (collision(pacman, food)) {
             foodEaten = food;
-            score += 10;
+            if (food.isPower) {
+                isFrightened = true;
+                frightenedTimer = frightenedDuration;
+                score += 50;
+                for (let ghost of ghosts) {
+                    ghost.setFrightenedMode(true);
+                }
+            }
+            else {
+                score += 10;
+            }
             break;
         }
     }
@@ -386,8 +424,10 @@ function resetPosition() {
 
 
 class Block {
-    constructor(image, x, y, width, height) {
+    constructor(image, x, y, width, height, frightenedImage = null) {
         this.image = image;
+        this.frightenedImage = frightenedGhostImage;
+        this.originalImage = image;
         this.x = x;
         this.y = y;
         this.width = width;
@@ -439,6 +479,14 @@ class Block {
         else if (this.direction == 'L') {
             this.velocityX = -tileSize / 4;
             this.velocityY = 0;
+        }
+    }
+
+    setFrightenedMode(isOn) {
+        if (isOn && this.frightenedImage) {
+            this.image = this.frightenedImage;
+        } else {
+            this.image = this.originalImage;
         }
     }
 }
